@@ -1,0 +1,39 @@
+@page "/departments"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using JiraMinimal.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<JiraContext> DbFactory
+
+<PageTitle>Список отделов</PageTitle>
+<h1>Список отделов</h1>
+
+<AuthorizeView Roles="Administrator">
+    <p>
+        <a href="/departments/create">Добавить отдел</a>
+    </p>
+</AuthorizeView>
+
+<QuickGrid Class="table" Items="context.Departments">
+    <PropertyColumn Title="Название" Property="d => d.Name" />
+    <PropertyColumn Title="Описание" Property="d => d.Description" />
+    <TemplateColumn Context="d">
+        <AuthorizeView Roles="Administrator">
+            <a href="/departments/edit/@d.DepartmentId">Редактировать</a>
+            <a href="/departments/delete/@d.DepartmentId">Удалить</a>
+        </AuthorizeView>
+        <a href="/departments/details/@d.DepartmentId">Просмотр</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private JiraContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

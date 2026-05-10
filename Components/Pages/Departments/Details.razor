@@ -1,0 +1,35 @@
+@page "/departments/details/{DepartmentId:int}"
+@using Microsoft.EntityFrameworkCore
+@using JiraMinimal.Data
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+
+<PageTitle>Просмотр отдела</PageTitle>
+<h1>Просмотр отдела</h1>
+
+@if (department is not null)
+{
+    <dl>
+        <dt>Название:</dt>
+        <dd>@department.Name</dd>
+        <dt>Описание:</dt>
+        <dd>@department.Description</dd>
+    </dl>
+}
+else
+{
+    <p>Отдел не найден.</p>
+}
+<a href="/departments">Назад к списку</a>
+
+@code {
+    [Parameter]
+    public int DepartmentId { get; set; }
+    private Department? department;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        department = await context.Departments.FindAsync(DepartmentId);
+    }
+}

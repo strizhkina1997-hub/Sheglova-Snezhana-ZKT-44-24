@@ -1,0 +1,135 @@
+@page "/issues/edit/{IssueId:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
+@using Microsoft.EntityFrameworkCore
+@using JiraMinimal.Data
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Редактирование задачи</PageTitle>
+<h1>Редактирование задачи</h1>
+
+@if (issue is not null)
+{
+    <EditForm Model="issue" OnValidSubmit="UpdateIssue" FormName="editIssue">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="mb-3">
+            <label class="form-label">Название:</label>
+            <InputText @bind-Value="issue.Title" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Описание:</label>
+            <InputTextArea @bind-Value="issue.Description" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Проект:</label>
+            <InputSelect @bind-Value="issue.ProjectId" class="form-control">
+                @foreach (var p in projects)
+                {
+                    <option value="@p.ProjectId">@p.Name</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Тип:</label>
+            <InputSelect @bind-Value="issue.Type" class="form-control">
+                <option value="Задача">Задача</option>
+                <option value="Ошибка">Ошибка</option>
+                <option value="История">История</option>
+                <option value="Эпик">Эпик</option>
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Статус:</label>
+            <InputSelect @bind-Value="issue.IssueStatusId" class="form-control">
+                @foreach (var s in statuses)
+                {
+                    <option value="@s.IssueStatusId">@s.Name</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Приоритет:</label>
+            <InputSelect @bind-Value="issue.IssuePriorityId" class="form-control">
+                @foreach (var p in priorities)
+                {
+                    <option value="@p.IssuePriorityId">@p.Name</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Исполнитель:</label>
+            <InputSelect @bind-Value="issue.AssigneeId" class="form-control">
+                <option value="">-- Не назначен --</option>
+                @foreach (var u in users)
+                {
+                    <option value="@u.Id">@u.FullName</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Автор:</label>
+            <InputSelect @bind-Value="issue.ReporterId" class="form-control">
+                @foreach (var u in users)
+                {
+                    <option value="@u.Id">@u.FullName</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Текущий отдел:</label>
+            <InputSelect @bind-Value="issue.CurrentDepartmentId" class="form-control">
+                @foreach (var d in departments)
+                {
+                    <option value="@d.DepartmentId">@d.Name</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Крайний срок:</label>
+            <InputDate @bind-Value="issue.DueDate" class="form-control" />
+        </div>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+    </EditForm>
+}
+else
+{
+    <p>Задача не найдена.</p>
+}
+<a href="/issues">Назад к списку</a>
+
+@code {
+    [Parameter]
+    public int IssueId { get; set; }
+    private Issue? issue;
+    private List<Project> projects = new();
+    private List<IssueStatus> statuses = new();
+    private List<IssuePriority> priorities = new();
+    private List<ApplicationUser> users = new();
+    private List<Department> departments = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        issue = await context.Issues.FindAsync(IssueId);
+        if (issue is not null)
+        {
+            projects = await context.Projects.ToListAsync();
+            statuses = await context.IssueStatuses.ToListAsync();
+            priorities = await context.IssuePriorities.ToListAsync();
+            users = await context.Users.ToListAsync();
+            departments = await context.Departments.ToListAsync();
+        }
+    }
+
+    private async Task UpdateIssue()
+    {
+        if (issue is null) return;
+        using var context = DbFactory.CreateDbContext();
+        context.Issues.Update(issue);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/issues");
+    }
+}

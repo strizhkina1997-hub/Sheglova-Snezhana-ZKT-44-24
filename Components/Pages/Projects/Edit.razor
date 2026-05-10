@@ -1,0 +1,80 @@
+@page "/projects/edit/{ProjectId:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
+@using Microsoft.EntityFrameworkCore
+@using JiraMinimal.Data
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Редактирование проекта</PageTitle>
+<h1>Редактирование проекта</h1>
+
+@if (project is not null)
+{
+    <EditForm Model="project" OnValidSubmit="UpdateProject" FormName="editProject">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="mb-3">
+            <label class="form-label">Название:</label>
+            <InputText @bind-Value="project.Name" class="form-control" />
+            <ValidationMessage For="() => project.Name" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Описание:</label>
+            <InputTextArea @bind-Value="project.Description" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Отдел:</label>
+            <InputSelect @bind-Value="project.DepartmentId" class="form-control">
+                @foreach (var dep in departments)
+                {
+                    <option value="@dep.DepartmentId">@dep.Name</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Владелец:</label>
+            <InputSelect @bind-Value="project.OwnerId" class="form-control">
+                @foreach (var user in users)
+                {
+                    <option value="@user.Id">@user.FullName (@user.Email)</option>
+                }
+            </InputSelect>
+        </div>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+    </EditForm>
+}
+else
+{
+    <p>Проект не найден.</p>
+}
+<a href="/projects">Назад к списку</a>
+
+@code {
+    [Parameter]
+    public int ProjectId { get; set; }
+    private Project? project;
+    private List<Department> departments = new();
+    private List<ApplicationUser> users = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        project = await context.Projects.FindAsync(ProjectId);
+        if (project is not null)
+        {
+            departments = await context.Departments.ToListAsync();
+            users = await context.Users.ToListAsync();
+        }
+    }
+
+    private async Task UpdateProject()
+    {
+        if (project is null) return;
+        using var context = DbFactory.CreateDbContext();
+        context.Projects.Update(project);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/projects");
+    }
+}

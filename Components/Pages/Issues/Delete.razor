@@ -1,0 +1,43 @@
+@page "/issues/delete/{IssueId:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
+@using Microsoft.EntityFrameworkCore
+@using JiraMinimal.Data
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Удаление задачи</PageTitle>
+<h1>Удаление задачи</h1>
+
+@if (issue is not null)
+{
+    <p>Вы уверены, что хотите удалить задачу <strong>@issue.Title</strong>?</p>
+    <button class="btn btn-danger" @onclick="DeleteIssue">Удалить</button>
+}
+else
+{
+    <p>Задача не найдена.</p>
+}
+<a href="/issues">Назад к списку</a>
+
+@code {
+    [Parameter]
+    public int IssueId { get; set; }
+    private Issue? issue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        issue = await context.Issues.FindAsync(IssueId);
+    }
+
+    private async Task DeleteIssue()
+    {
+        if (issue is null) return;
+        using var context = DbFactory.CreateDbContext();
+        context.Issues.Remove(issue);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/issues");
+    }
+}

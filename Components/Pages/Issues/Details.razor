@@ -1,0 +1,60 @@
+@page "/issues/details/{IssueId:int}"
+@using Microsoft.EntityFrameworkCore
+@using JiraMinimal.Data
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+
+<PageTitle>Просмотр задачи</PageTitle>
+<h1>Просмотр задачи</h1>
+
+@if (issue is not null)
+{
+    <dl>
+        <dt>Название:</dt>
+        <dd>@issue.Title</dd>
+        <dt>Описание:</dt>
+        <dd>@issue.Description</dd>
+        <dt>Проект:</dt>
+        <dd>@issue.Project?.Name</dd>
+        <dt>Тип:</dt>
+        <dd>@issue.Type</dd>
+        <dt>Статус:</dt>
+        <dd>@issue.IssueStatus?.Name</dd>
+        <dt>Приоритет:</dt>
+        <dd>@issue.IssuePriority?.Name</dd>
+        <dt>Исполнитель:</dt>
+        <dd>@issue.Assignee?.FullName</dd>
+        <dt>Автор:</dt>
+        <dd>@issue.Reporter?.FullName</dd>
+        <dt>Текущий отдел:</dt>
+        <dd>@issue.CurrentDepartment?.Name</dd>
+        <dt>Дата создания:</dt>
+        <dd>@issue.CreatedAt</dd>
+        <dt>Срок:</dt>
+        <dd>@issue.DueDate?.ToShortDateString()</dd>
+    </dl>
+}
+else
+{
+    <p>Задача не найдена.</p>
+}
+<a href="/issues">Назад к списку</a>
+
+@code {
+    [Parameter]
+    public int IssueId { get; set; }
+    private Issue? issue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        issue = await context.Issues
+            .Include(i => i.Project)
+            .Include(i => i.IssueStatus)
+            .Include(i => i.IssuePriority)
+            .Include(i => i.Assignee)
+            .Include(i => i.Reporter)
+            .Include(i => i.CurrentDepartment)
+            .FirstOrDefaultAsync(i => i.IssueId == IssueId);
+    }
+}

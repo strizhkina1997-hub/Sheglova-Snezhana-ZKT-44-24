@@ -1,0 +1,56 @@
+@page "/departments/edit/{DepartmentId:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
+@using Microsoft.EntityFrameworkCore
+@using JiraMinimal.Data
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Редактирование отдела</PageTitle>
+<h1>Редактирование отдела</h1>
+
+@if (department is not null)
+{
+    <EditForm Model="department" OnValidSubmit="UpdateDepartment" FormName="editDepartment">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="mb-3">
+            <label class="form-label">Название:</label>
+            <InputText @bind-Value="department.Name" class="form-control" />
+            <ValidationMessage For="() => department.Name" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Описание:</label>
+            <InputTextArea @bind-Value="department.Description" class="form-control" />
+        </div>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+    </EditForm>
+}
+else
+{
+    <p>Отдел не найден.</p>
+}
+<a href="/departments">Назад к списку</a>
+
+@code {
+    [Parameter]
+    public int DepartmentId { get; set; }
+
+    private Department? department;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        department = await context.Departments.FindAsync(DepartmentId);
+    }
+
+    private async Task UpdateDepartment()
+    {
+        if (department is null) return;
+        using var context = DbFactory.CreateDbContext();
+        context.Departments.Update(department);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/departments");
+    }
+}

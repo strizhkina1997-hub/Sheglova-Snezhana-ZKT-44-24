@@ -1,0 +1,44 @@
+@page "/projects/details/{ProjectId:int}"
+@using Microsoft.EntityFrameworkCore
+@using JiraMinimal.Data
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+
+<PageTitle>Просмотр проекта</PageTitle>
+<h1>Просмотр проекта</h1>
+
+@if (project is not null)
+{
+    <dl>
+        <dt>Название:</dt>
+        <dd>@project.Name</dd>
+        <dt>Описание:</dt>
+        <dd>@project.Description</dd>
+        <dt>Отдел:</dt>
+        <dd>@project.Department?.Name</dd>
+        <dt>Владелец:</dt>
+        <dd>@project.Owner?.FullName</dd>
+        <dt>Дата создания:</dt>
+        <dd>@project.CreatedAt.ToShortDateString()</dd>
+    </dl>
+}
+else
+{
+    <p>Проект не найден.</p>
+}
+<a href="/projects">Назад к списку</a>
+
+@code {
+    [Parameter]
+    public int ProjectId { get; set; }
+    private Project? project;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        project = await context.Projects
+            .Include(p => p.Department)
+            .Include(p => p.Owner)
+            .FirstOrDefaultAsync(p => p.ProjectId == ProjectId);
+    }
+}

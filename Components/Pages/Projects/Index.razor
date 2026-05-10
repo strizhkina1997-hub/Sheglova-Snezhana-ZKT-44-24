@@ -1,0 +1,46 @@
+@page "/projects"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using JiraMinimal.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<JiraContext> DbFactory
+
+<PageTitle>Список проектов</PageTitle>
+<h1>Список проектов</h1>
+
+<AuthorizeView Roles="Administrator">
+    <p>
+        <a href="/projects/create">Добавить проект</a>
+    </p>
+</AuthorizeView>
+
+<QuickGrid Class="table" Items="ProjectItems">
+    <PropertyColumn Title="Название" Property="p => p.Name" />
+    <PropertyColumn Title="Отдел" Property="p => p.Department.Name" />
+    <PropertyColumn Title="Владелец" Property="p => p.Owner.FullName" />
+    <PropertyColumn Title="Создан" Property="p => p.CreatedAt.ToShortDateString()" />
+    <TemplateColumn Context="p">
+        <AuthorizeView Roles="Administrator">
+            <a href="/projects/edit/@p.ProjectId">Редактировать</a>
+            <a href="/projects/delete/@p.ProjectId">Удалить</a>
+        </AuthorizeView>
+        <a href="/projects/details/@p.ProjectId">Просмотр</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private List<Project> projects = new();
+    private IQueryable<Project> ProjectItems => projects.AsQueryable();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        projects = await context.Projects
+            .Include(p => p.Department)
+            .Include(p => p.Owner)
+            .ToListAsync();
+    }
+
+    public async ValueTask DisposeAsync() { }
+}

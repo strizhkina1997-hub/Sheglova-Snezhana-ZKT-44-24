@@ -1,0 +1,50 @@
+@page "/departments/delete/{DepartmentId:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
+@using Microsoft.EntityFrameworkCore
+@using JiraMinimal.Data
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Удаление отдела</PageTitle>
+<h1>Удаление отдела</h1>
+
+@if (department is not null)
+{
+    <p>Вы уверены, что хотите удалить отдел <strong>@department.Name</strong>?</p>
+    <button class="btn btn-danger" @onclick="DeleteDepartment">Удалить</button>
+}
+else
+{
+    <p>Отдел не найден.</p>
+}
+<a href="/departments">Назад к списку</a>
+
+@code {
+    [Parameter]
+    public int DepartmentId { get; set; }
+
+    private Department? department;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        department = await context.Departments.FindAsync(DepartmentId);
+    }
+
+    private async Task DeleteDepartment()
+    {
+        if (department is null) return;
+
+        using var context = DbFactory.CreateDbContext();
+        // Загружаем свежий экземпляр и удаляем
+        var deptToDelete = await context.Departments.FindAsync(DepartmentId);
+        if (deptToDelete is not null)
+        {
+            context.Departments.Remove(deptToDelete);
+            await context.SaveChangesAsync();
+        }
+        NavigationManager.NavigateTo("/departments");
+    }
+}

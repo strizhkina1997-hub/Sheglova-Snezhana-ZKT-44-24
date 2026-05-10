@@ -1,0 +1,39 @@
+@page "/departments/create"
+@attribute [Authorize(Roles = "Administrator")]
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using JiraMinimal.Data
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Добавление отдела</PageTitle>
+<h1>Добавление отдела</h1>
+
+<EditForm Model="department" OnValidSubmit="CreateDepartment" FormName="createDepartment">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="mb-3">
+        <label for="name" class="form-label">Название:</label>
+        <InputText id="name" @bind-Value="department.Name" class="form-control" />
+        <ValidationMessage For="() => department.Name" />
+    </div>
+    <div class="mb-3">
+        <label for="desc" class="form-label">Описание:</label>
+        <InputTextArea id="desc" @bind-Value="department.Description" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Добавить</button>
+</EditForm>
+<a href="/departments">Назад к списку</a>
+
+@code {
+    private Department department = new();
+
+    private async Task CreateDepartment()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Departments.Add(department);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/departments");
+    }
+}

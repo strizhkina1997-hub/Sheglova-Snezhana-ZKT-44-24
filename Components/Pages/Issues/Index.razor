@@ -1,0 +1,80 @@
+@page "/issues"
+@page "/issues/byproject/{ProjectId:int}"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using JiraMinimal.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<JiraContext> DbFactory
+
+<PageTitle>Задачи</PageTitle>
+<h1>Задачи</h1>
+
+@if (project != null)
+{
+    <h3>Проект: @project.Name</h3>
+}
+
+<AuthorizeView Roles="Administrator">
+    <p>
+        <a href="/issues/create">Добавить задачу</a>
+    </p>
+</AuthorizeView>
+
+<QuickGrid Class="table" Items="issueItems">
+    <PropertyColumn Title="Название" Property="i => i.Title" />
+    <PropertyColumn Title="Тип" Property="i => i.Type" />
+    <PropertyColumn Title="Статус" Property="i => i.IssueStatus.Name" />
+    <PropertyColumn Title="Приоритет" Property="i => i.IssuePriority.Name" />
+    <PropertyColumn Title="Исполнитель" Property="i => GetAssigneeName(i)" />
+    <PropertyColumn Title="Отдел" Property="i => i.CurrentDepartment.Name" />
+    <TemplateColumn Context="i">
+        <a href="/issues/details/@i.IssueId">Просмотр</a>
+        <AuthorizeView Roles="Administrator">
+            <a href="/issues/edit/@i.IssueId">Редактировать</a>
+            <a href="/issues/delete/@i.IssueId">Удалить</a>
+            <a href="/issues/transfer/@i.IssueId">Передать</a>
+        </AuthorizeView>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    [Parameter]
+    public int? ProjectId { get; set; }
+
+    private List<Issue> issues = new();
+    private Project? project;
+    private IQueryable<Issue> issueItems => issues.AsQueryable();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        if (ProjectId.HasValue)
+        {
+            project = await context.Projects.FindAsync(ProjectId.Value);
+            if (project != null)
+            {
+                issues = await context.Issues
+                    .Where(i => i.ProjectId == ProjectId.Value)
+                    .Include(i => i.IssueStatus)
+                    .Include(i => i.IssuePriority)
+                    .Include(i => i.Assignee)
+                    .Include(i => i.CurrentDepartment)
+                    .ToListAsync();
+            }
+        }
+        else
+        {
+            issues = await context.Issues
+                .Include(i => i.IssueStatus)
+                .Include(i => i.IssuePriority)
+                .Include(i => i.Assignee)
+                .Include(i => i.CurrentDepartment)
+                .ToListAsync();
+        }
+        
+    }
+
+    public async ValueTask DisposeAsync() { }
+     private string GetAssigneeName(Issue issue) => issue.Assignee?.FullName ?? "";
+}

@@ -1,0 +1,43 @@
+@page "/projects/delete/{ProjectId:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
+@using Microsoft.EntityFrameworkCore
+@using JiraMinimal.Data
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Удаление проекта</PageTitle>
+<h1>Удаление проекта</h1>
+
+@if (project is not null)
+{
+    <p>Вы уверены, что хотите удалить проект <strong>@project.Name</strong>?</p>
+    <button class="btn btn-danger" @onclick="DeleteProject">Удалить</button>
+}
+else
+{
+    <p>Проект не найден.</p>
+}
+<a href="/projects">Назад к списку</a>
+
+@code {
+    [Parameter]
+    public int ProjectId { get; set; }
+    private Project? project;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        project = await context.Projects.FindAsync(ProjectId);
+    }
+
+    private async Task DeleteProject()
+    {
+        if (project is null) return;
+        using var context = DbFactory.CreateDbContext();
+        context.Projects.Remove(project);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/projects");
+    }
+}

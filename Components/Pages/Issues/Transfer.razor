@@ -1,0 +1,103 @@
+@page "/issues/transfer/{IssueId:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
+@using Microsoft.EntityFrameworkCore
+@using JiraMinimal.Data
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Передача задачи</PageTitle>
+<h1>Передача задачи в другой отдел</h1>
+
+@if (issue is not null)
+{
+    <div class="mb-3">
+        <strong>Задача:</strong> @issue.Title<br />
+        <strong>Текущий отдел:</strong> @issue.CurrentDepartment?.Name
+    </div>
+    <hr />
+    <div class="mb-3">
+        <label class="form-label">Новый отдел:</label>
+        <InputSelect @bind-Value="toDepartmentId" class="form-control">
+            <option value="">-- Выберите отдел --</option>
+            @foreach (var dep in departments)
+            {
+                <option value="@dep.DepartmentId">@dep.Name</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Новый статус (необязательно):</label>
+        <InputSelect @bind-Value="toStatusId" class="form-control">
+            <option value="">-- Не менять --</option>
+            @foreach (var st in statuses)
+            {
+                <option value="@st.IssueStatusId">@st.Name</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Комментарий:</label>
+        <InputTextArea @bind-Value="comment" class="form-control" />
+    </div>
+    <button class="btn btn-primary" @onclick="TransferIssue">Передать</button>
+}
+else
+{
+    <p>Задача не найдена.</p>
+}
+
+<a href="/issues">Назад к списку</a>
+
+@code {
+    [Parameter]
+    public int IssueId { get; set; }
+
+    private Issue? issue;
+    private List<Department> departments = new();
+    private List<IssueStatus> statuses = new();
+    private int? toDepartmentId;
+    private int? toStatusId;
+    private string? comment;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        issue = await context.Issues
+            .Include(i => i.CurrentDepartment)
+            .FirstOrDefaultAsync(i => i.IssueId == IssueId);
+        if (issue == null) return;
+        departments = await context.Departments.ToListAsync();
+        statuses = await context.IssueStatuses.ToListAsync();
+    }
+
+    private async Task TransferIssue()
+    {
+        if (issue == null || toDepartmentId == null) return;
+
+        using var context = DbFactory.CreateDbContext();
+        var currentIssue = await context.Issues.FindAsync(IssueId);
+        if (currentIssue == null) return;
+
+        int fromDepartmentId = currentIssue.CurrentDepartmentId;
+        currentIssue.CurrentDepartmentId = toDepartmentId.Value;
+        if (toStatusId.HasValue)
+        {
+            currentIssue.IssueStatusId = toStatusId.Value;
+        }
+
+        var transfer = new IssueDepartmentTransfer
+        {
+            IssueId = IssueId,
+            FromDepartmentId = fromDepartmentId,
+            ToDepartmentId = toDepartmentId.Value,
+            Comment = comment,
+            TransferredAt = DateTime.Now,
+            TransferredByUserId = "system" // позже можно заменить на реального пользователя
+        };
+        context.IssueDepartmentTransfers.Add(transfer);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/issues");
+    }
+}
