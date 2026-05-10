@@ -60,6 +60,7 @@ else
     private int? toDepartmentId;
     private int? toStatusId;
     private string? comment;
+    private string currentUserId = string.Empty; // идентификатор пользователя, выполняющего передачу
 
     protected override async Task OnInitializedAsync()
     {
@@ -68,8 +69,14 @@ else
             .Include(i => i.CurrentDepartment)
             .FirstOrDefaultAsync(i => i.IssueId == IssueId);
         if (issue == null) return;
+
         departments = await context.Departments.ToListAsync();
         statuses = await context.IssueStatuses.ToListAsync();
+
+        // Загружаем первого пользователя (например, администратора), чтобы использовать его Id для передачи
+        var firstUser = await context.Users.FirstOrDefaultAsync();
+        if (firstUser != null)
+            currentUserId = firstUser.Id;
     }
 
     private async Task TransferIssue()
@@ -94,7 +101,7 @@ else
             ToDepartmentId = toDepartmentId.Value,
             Comment = comment,
             TransferredAt = DateTime.Now,
-            TransferredByUserId = "system" // позже можно заменить на реального пользователя
+            TransferredByUserId = currentUserId // используем Id первого пользователя
         };
         context.IssueDepartmentTransfers.Add(transfer);
         await context.SaveChangesAsync();
