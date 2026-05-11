@@ -1,0 +1,54 @@
+@page "/admin/users/delete/{UserId}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Identity
+@using JiraMinimal.Data
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+
+<PageTitle>Удаление пользователя</PageTitle>
+<h1>Удаление пользователя</h1>
+
+@if (user is not null)
+{
+    <p>Вы уверены, что хотите удалить пользователя <strong>@user.Email</strong> (@user.FullName)?</p>
+    <button class="btn btn-danger" @onclick="DeleteUser">Удалить</button>
+}
+else
+{
+    <p>Пользователь не найден.</p>
+}
+<a href="/admin/users">Назад к списку</a>
+
+@code {
+    [Parameter]
+    public string? UserId { get; set; }
+
+    private ApplicationUser? user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(UserId)) return;
+
+        using var context = DbFactory.CreateDbContext();
+        user = await context.Users.FirstOrDefaultAsync(u => u.Id == UserId);
+    }
+
+    private async Task DeleteUser()
+    {
+        if (user is null) return;
+
+        var result = await UserManager.DeleteAsync(user);
+        if (result.Succeeded)
+        {
+            NavigationManager.NavigateTo("/admin/users");
+        }
+        else
+        {
+            // Можно вывести ошибку, но для простоты оставим так
+        }
+    }
+}

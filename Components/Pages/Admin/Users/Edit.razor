@@ -1,0 +1,207 @@
+@page "/admin/users/edit/{UserId}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Identity
+@using JiraMinimal.Data
+@using System.ComponentModel.DataAnnotations
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+
+<PageTitle>Редактирование пользователя</PageTitle>
+<h1>Редактирование пользователя</h1>
+
+@if (user is not null)
+{
+    <EditForm Model="Input" OnValidSubmit="UpdateUser" FormName="editUser">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label">Email (не редактируется):</label>
+            <input class="form-control" value="@user.Email" disabled />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">ФИО:</label>
+            <InputText @bind-Value="Input.FullName" class="form-control" />
+            <ValidationMessage For="() => Input.FullName" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Роль:</label>
+            <InputSelect @bind-Value="Input.Role" class="form-control">
+                <option value="Admin">Администратор</option>
+                <option value="User">Пользователь</option>
+            </InputSelect>
+            <ValidationMessage For="() => Input.Role" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Отдел:</label>
+            <InputSelect @bind-Value="Input.DepartmentId" class="form-control">
+                <option value="">-- Не указан --</option>
+                @foreach (var dep in departments)
+                {
+                    <option value="@dep.DepartmentId">@dep.Name</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Руководитель отдела:</label>
+            <input class="form-control" value="@headName" disabled />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Новый пароль (оставьте пустым, чтобы не менять):</label>
+            <InputText type="password" @bind-Value="Input.Password" class="form-control" />
+            <ValidationMessage For="() => Input.Password" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+    </EditForm>
+}
+else
+{
+    <p>Пользователь не найден.</p>
+}
+<a href="/admin/users">Назад к списку</a>
+
+@code {
+    [Parameter]
+    public string? UserId { get; set; }
+
+    private ApplicationUser? user;
+    private InputModel Input { get; set; } = new();
+    private List<Department> departments = new();
+
+    private string headName => departments
+        .Where(d => d.DepartmentId == Input.DepartmentId)
+        .Select(d => d.Head?.FullName ?? "Не назначен")
+        .FirstOrDefault() ?? "";
+
+    private class InputModel
+    {
+        [Required(ErrorMessage = "Укажите ФИО")]
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Длина от 3 до 100 символов")]
+        public string FullName { get; set; } = "";
+
+        [Required(ErrorMessage = "Выберите роль")]
+        public string Role { get; set; } = "";
+
+        public int? DepartmentId { get; set; }
+
+        [MinLength(6, ErrorMessage = "Минимальная длина пароля — 6 символов")]
+        public string? Password { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(UserId)) return;
+
+        using var context = DbFactory.CreateDbContext();
+        departments = await context.Departments
+            .Include(d => d.Head)
+            .ToListAsync();
+
+        user = await context.Users
+            .Include(u => u.UserDepartments)
+            .FirstOrDefaultAsync(u => u.Id == UserId);
+
+        if (user is not null)
+        {
+            var primaryDept = user.UserDepartments?
+                .FirstOrDefault(ud => ud.IsPrimary);
+
+            Input = new InputModel
+            {
+                FullName = user.FullName,
+                Role = user.Role,
+                DepartmentId = primaryDept?.DepartmentId
+            };
+        }
+    }
+
+    private async Task UpdateUser()
+    {
+        if (user is null) return;
+
+        // 1. Загружаем актуального пользователя через UserManager
+        var dbUser = await UserManager.FindByIdAsync(UserId!);
+        if (dbUser is null) return;
+
+        // 2. Обновляем обычные свойства
+        dbUser.FullName = Input.FullName;
+        dbUser.Role = Input.Role;
+        await UserManager.UpdateAsync(dbUser);   // сохраняет FullName и Role через UserManager
+
+        // 3. Обновляем роль в Identity (через UserManager)
+        var currentRoles = await UserManager.GetRolesAsync(dbUser);
+        if (Input.Role == "Admin")
+        {
+            if (!currentRoles.Contains("Administrator"))
+            {
+                if (currentRoles.Any())
+                    await UserManager.RemoveFromRolesAsync(dbUser, currentRoles);
+                await UserManager.AddToRoleAsync(dbUser, "Administrator");
+            }
+        }
+        else
+        {
+            if (!currentRoles.Contains("User"))
+            {
+                if (currentRoles.Any())
+                    await UserManager.RemoveFromRolesAsync(dbUser, currentRoles);
+                await UserManager.AddToRoleAsync(dbUser, "User");
+            }
+        }
+
+        // 4. Обновляем связь с отделом (через контекст, т.к. UserManager этим не управляет)
+        using (var context = DbFactory.CreateDbContext())
+        {
+            var u = await context.Users
+                .Include(x => x.UserDepartments)
+                .FirstOrDefaultAsync(x => x.Id == UserId);
+            if (u == null) return;
+
+            var existingPrimary = u.UserDepartments?.FirstOrDefault(ud => ud.IsPrimary);
+
+            if (Input.DepartmentId.HasValue)
+            {
+                if (existingPrimary == null)
+                {
+                    context.UserDepartments.Add(new UserDepartment
+                    {
+                        UserId = u.Id,
+                        DepartmentId = Input.DepartmentId.Value,
+                        IsPrimary = true
+                    });
+                }
+                else if (existingPrimary.DepartmentId != Input.DepartmentId.Value)
+                {
+                    existingPrimary.DepartmentId = Input.DepartmentId.Value;
+                    context.UserDepartments.Update(existingPrimary);
+                }
+            }
+            else
+            {
+                if (existingPrimary != null)
+                    context.UserDepartments.Remove(existingPrimary);
+            }
+
+            await context.SaveChangesAsync();
+        }
+
+        // 5. Пароль меняем отдельно, если указан
+        if (!string.IsNullOrEmpty(Input.Password))
+        {
+            var token = await UserManager.GeneratePasswordResetTokenAsync(dbUser);
+            await UserManager.ResetPasswordAsync(dbUser, token, Input.Password);
+        }
+
+        NavigationManager.NavigateTo("/admin/users");
+    }
+}

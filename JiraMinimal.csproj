@@ -25,4 +25,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Components\Pages\Admin\" />
+    <Folder Include="Components\Pages\Admin\Users\" />
+  </ItemGroup>
+
 </Project>

@@ -1,0 +1,81 @@
+@page "/admin/users/details/{UserId}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
+@using Microsoft.EntityFrameworkCore
+@using JiraMinimal.Data
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+
+<PageTitle>Просмотр пользователя</PageTitle>
+<h1>Просмотр пользователя</h1>
+
+@if (user is not null)
+{
+    <dl>
+        <dt>Email:</dt>
+        <dd>@user.Email</dd>
+
+        <dt>ФИО:</dt>
+        <dd>@user.FullName</dd>
+
+        <dt>Роль:</dt>
+        <dd>@user.Role</dd>
+
+        <dt>Дата регистрации:</dt>
+        <dd>@user.CreatedAt.ToShortDateString()</dd>
+
+        <dt>Отдел:</dt>
+        <dd>
+            @{
+                var primaryDept = user.UserDepartments?.FirstOrDefault(ud => ud.IsPrimary);
+                if (primaryDept != null)
+                {
+                    @primaryDept.Department?.Name
+                }
+                else
+                {
+                    @("Не указан")
+                }
+            }
+        </dd>
+
+        <dt>Руководитель отдела:</dt>
+        <dd>
+            @{
+                var dept = user.UserDepartments?.FirstOrDefault(ud => ud.IsPrimary)?.Department;
+                if (dept?.Head != null)
+                {
+                    @dept.Head.FullName
+                }
+                else
+                {
+                    @("Не назначен")
+                }
+            }
+        </dd>
+    </dl>
+}
+else
+{
+    <p>Пользователь не найден.</p>
+}
+<a href="/admin/users">Назад к списку</a>
+
+@code {
+    [Parameter]
+    public string? UserId { get; set; }
+
+    private ApplicationUser? user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(UserId)) return;
+
+        using var context = DbFactory.CreateDbContext();
+        user = await context.Users
+            .Include(u => u.UserDepartments)
+                .ThenInclude(ud => ud.Department)
+                    .ThenInclude(d => d.Head)
+            .FirstOrDefaultAsync(u => u.Id == UserId);
+    }
+}

@@ -1,0 +1,154 @@
+@page "/admin/users/create"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Identity
+@using JiraMinimal.Data
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+
+<PageTitle>Добавление пользователя</PageTitle>
+<h1>Добавление пользователя</h1>
+
+<EditForm Model="Input" OnValidSubmit="CreateUser" FormName="createUser">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="email" class="form-label">Email:</label>
+        <InputText id="email" @bind-Value="Input.Email" class="form-control" />
+        <ValidationMessage For="() => Input.Email" />
+    </div>
+
+    <div class="mb-3">
+        <label for="fullname" class="form-label">ФИО:</label>
+        <InputText id="fullname" @bind-Value="Input.FullName" class="form-control" />
+        <ValidationMessage For="() => Input.FullName" />
+    </div>
+
+    <div class="mb-3">
+        <label for="role" class="form-label">Роль:</label>
+        <InputSelect id="role" @bind-Value="Input.Role" class="form-control">
+            <option value="">-- Выберите роль --</option>
+            <option value="Admin">Администратор</option>
+            <option value="User">Пользователь</option>
+        </InputSelect>
+        <ValidationMessage For="() => Input.Role" />
+    </div>
+
+    <div class="mb-3">
+        <label for="department" class="form-label">Отдел:</label>
+        <InputSelect id="department" @bind-Value="Input.DepartmentId" class="form-control">
+            <option value="">-- Не указан --</option>
+            @foreach (var dep in departments)
+            {
+                <option value="@dep.DepartmentId">@dep.Name</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Руководитель отдела:</label>
+        <input class="form-control" value="@headName" disabled />
+    </div>
+
+    <div class="mb-3">
+        <label for="password" class="form-label">Пароль:</label>
+        <InputText id="password" type="password" @bind-Value="Input.Password" class="form-control" />
+        <ValidationMessage For="() => Input.Password" />
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <button type="submit" class="btn btn-primary">Создать пользователя</button>
+</EditForm>
+<a href="/admin/users">Назад к списку</a>
+
+@code {
+    private InputModel Input { get; set; } = new();
+    private List<Department> departments = new();
+    private string errorMessage = string.Empty;
+    private string headName => departments
+        .Where(d => d.DepartmentId == Input.DepartmentId)
+        .Select(d => d.Head?.FullName ?? "Не назначен")
+        .FirstOrDefault() ?? "";
+
+    private class InputModel
+    {
+        [Required(ErrorMessage = "Укажите Email")]
+        [EmailAddress(ErrorMessage = "Некорректный Email")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "Укажите ФИО")]
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Длина от 3 до 100 символов")]
+        public string FullName { get; set; } = "";
+
+        [Required(ErrorMessage = "Выберите роль")]
+        public string Role { get; set; } = "";
+
+        public int? DepartmentId { get; set; }
+
+        [Required(ErrorMessage = "Введите пароль")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Минимальная длина пароля — 6 символов")]
+        public string Password { get; set; } = "";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        departments = await context.Departments
+            .Include(d => d.Head)
+            .ToListAsync();
+    }
+
+    private async Task CreateUser()
+    {
+        errorMessage = string.Empty;
+
+        var user = new ApplicationUser
+        {
+            UserName = Input.Email,
+            Email = Input.Email,
+            FullName = Input.FullName,
+            Role = Input.Role,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var result = await UserManager.CreateAsync(user, Input.Password);
+
+        if (result.Succeeded)
+        {
+            // Назначаем роль Identity
+            if (Input.Role == "Admin")
+                await UserManager.AddToRoleAsync(user, "Administrator");
+            else
+                await UserManager.AddToRoleAsync(user, "User");
+
+            // Если выбран отдел, добавляем связь
+            if (Input.DepartmentId.HasValue)
+            {
+                using var context = DbFactory.CreateDbContext();
+                context.UserDepartments.Add(new UserDepartment
+                {
+                    UserId = user.Id,
+                    DepartmentId = Input.DepartmentId.Value,
+                    IsPrimary = true
+                });
+                await context.SaveChangesAsync();
+            }
+
+            NavigationManager.NavigateTo("/admin/users");
+        }
+        else
+        {
+            // Показываем первую ошибку Identity
+            errorMessage = result.Errors.FirstOrDefault()?.Description ?? "Ошибка при создании пользователя.";
+        }
+    }
+}
