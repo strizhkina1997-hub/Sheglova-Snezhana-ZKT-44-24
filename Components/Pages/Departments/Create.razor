@@ -1,6 +1,6 @@
 @page "/departments/create"
-@attribute [Authorize(Roles = "Administrator")]
 @using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
 @using Microsoft.EntityFrameworkCore
 @using JiraMinimal.Data
 @rendermode InteractiveServer
@@ -22,12 +22,29 @@
         <label for="desc" class="form-label">Описание:</label>
         <InputTextArea id="desc" @bind-Value="department.Description" class="form-control" />
     </div>
+    <div class="mb-3">
+        <label for="head" class="form-label">Руководитель:</label>
+        <InputSelect id="head" @bind-Value="department.HeadUserId" class="form-control">
+            <option value="">-- Не назначен --</option>
+            @foreach (var user in users)
+            {
+                <option value="@user.Id">@user.FullName (@user.Email)</option>
+            }
+        </InputSelect>
+    </div>
     <button type="submit" class="btn btn-primary">Добавить</button>
 </EditForm>
 <a href="/departments">Назад к списку</a>
 
 @code {
     private Department department = new();
+    private List<ApplicationUser> users = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        users = await context.Users.ToListAsync();
+    }
 
     private async Task CreateDepartment()
     {

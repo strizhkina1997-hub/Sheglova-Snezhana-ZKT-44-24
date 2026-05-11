@@ -138,6 +138,7 @@ C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\JiraMinimal.
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\JiraMinimal.AssemblyInfo.cs
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\JiraMinimal.csproj.CoreCompileInputs.cache
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\JiraMinimal.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\JiraMinimal.sourcelink.json
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\rjimswa.dswa.cache.json
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\rjsmrazor.dswa.cache.json
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\rjsmcshtml.dswa.cache.json
@@ -210,4 +211,3 @@ C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\refint\JiraM
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\JiraMinimal.pdb
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\JiraMinimal.genruntimeconfig.cache
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\ref\JiraMinimal.dll
-C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\JiraMinimal.sourcelink.json

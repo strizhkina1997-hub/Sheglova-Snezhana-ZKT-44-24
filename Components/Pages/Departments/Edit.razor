@@ -24,6 +24,16 @@
             <label class="form-label">Описание:</label>
             <InputTextArea @bind-Value="department.Description" class="form-control" />
         </div>
+        <div class="mb-3">
+            <label class="form-label">Руководитель:</label>
+            <InputSelect @bind-Value="department.HeadUserId" class="form-control">
+                <option value="">-- Не назначен --</option>
+                @foreach (var user in users)
+                {
+                    <option value="@user.Id">@user.FullName (@user.Email)</option>
+                }
+            </InputSelect>
+        </div>
         <button type="submit" class="btn btn-primary">Сохранить</button>
     </EditForm>
 }
@@ -38,11 +48,16 @@ else
     public int DepartmentId { get; set; }
 
     private Department? department;
+    private List<ApplicationUser> users = new();
 
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
         department = await context.Departments.FindAsync(DepartmentId);
+        if (department != null)
+        {
+            users = await context.Users.ToListAsync();
+        }
     }
 
     private async Task UpdateDepartment()
