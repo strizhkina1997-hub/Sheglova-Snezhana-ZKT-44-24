@@ -1,0 +1,164 @@
+@page "/importexcel"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
+@using Microsoft.EntityFrameworkCore
+@using JiraMinimal.Data
+@using ExcelDataReader
+@inject IDbContextFactory<JiraContext> DbFactory
+
+<PageTitle>Импорт данных из Excel</PageTitle>
+<h1>Импорт данных из Excel</h1>
+
+<p>
+    <label>
+        Укажите файл Excel для импорта:
+        <InputFile OnChange="LoadFiles" />
+    </label>
+</p>
+
+@if (isLoading)
+{
+    <p>Загрузка...</p>
+}
+else
+{
+    <ul>
+        <li>Количество импортированных отделов: @departmentsCount</li>
+        <li>Количество импортированных проектов: @projectsCount</li>
+    </ul>
+    @if (StartTime != null)
+    {
+        TimeSpan ts = (EndTime ?? DateTime.Now).Subtract(StartTime ?? DateTime.Now);
+        <li>Время выполнения: @String.Format("{0:00}:{1:00}", ts.Seconds, ts.Milliseconds / 10)</li>
+    }
+}
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="text-danger" style="white-space: pre-wrap;">Ошибка: @ErrorMessage</div>
+}
+
+@code {
+    public string ErrorMessage { get; set; } = "";
+    DateTime? StartTime;
+    DateTime? EndTime;
+    private bool isLoading;
+    int departmentsCount;
+    int projectsCount;
+    const int MAX_FILESIZE = 5000 * 1024; // 5 MB
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        isLoading = true;
+        var browserFile = e.File;
+        if (browserFile != null)
+        {
+            try
+            {
+                using var sourceStream = browserFile.OpenReadStream(MAX_FILESIZE);
+                using var ms = new MemoryStream();
+                await sourceStream.CopyToAsync(ms);
+                ms.Position = 0;
+
+                System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+                using var reader = ExcelReaderFactory.CreateReader(ms);
+                StartTime = DateTime.Now;
+                await ImportFromReaderAsync(reader);
+                EndTime = DateTime.Now;
+            }
+            catch (Exception exception)
+            {
+                ErrorMessage = exception.Message;
+            }
+        }
+        isLoading = false;
+    }
+
+    private async Task ImportFromReaderAsync(IExcelDataReader reader)
+    {
+        departmentsCount = 0;
+        projectsCount = 0;
+        ErrorMessage = "";
+        using var context = DbFactory.CreateDbContext();
+
+        do
+        {
+            var sheetName = reader.Name;
+
+            if (sheetName == "Отделы")
+            {
+                // Пропускаем заголовок
+                reader.Read();
+                var depsToAdd = new List<Department>();
+                var existingNames = context.Departments.Select(d => d.Name).ToHashSet();
+                while (reader.Read())
+                {
+                    // Столбцы: Id (0), Название (1), Описание (2), Руководитель (3) – не импортируем
+                    var name = reader.GetValue(1)?.ToString();
+                    if (string.IsNullOrWhiteSpace(name) || existingNames.Contains(name)) continue;
+                    depsToAdd.Add(new Department
+                    {
+                        Name = name,
+                        Description = reader.GetValue(2)?.ToString()
+                    });
+                }
+                if (depsToAdd.Any())
+                {
+                    context.Departments.AddRange(depsToAdd);
+                    await context.SaveChangesAsync();
+                    departmentsCount = depsToAdd.Count;
+                }
+            }
+            else if (sheetName == "Проекты")
+            {
+                // Пропускаем заголовок
+                reader.Read();
+                var projToAdd = new List<Project>();
+                var existingProjectNames = context.Projects.Select(p => p.Name).ToHashSet();
+                while (reader.Read())
+                {
+                    // Столбцы: Id (0), Название (1), Описание (2), Отдел (3), Владелец (4)
+                    var name = reader.GetValue(1)?.ToString();
+                    if (string.IsNullOrWhiteSpace(name) || existingProjectNames.Contains(name)) continue;
+
+                    var deptName = reader.GetValue(3)?.ToString();
+                    var ownerField = reader.GetValue(4)?.ToString(); // "ФИО (email)"
+
+                    Department? dept = null;
+                    if (!string.IsNullOrWhiteSpace(deptName))
+                        dept = context.Departments.FirstOrDefault(d => d.Name == deptName);
+
+                    ApplicationUser? owner = null;
+                    if (!string.IsNullOrWhiteSpace(ownerField))
+                    {
+                        // Извлекаем email из строки вида "ФИО (email)"
+                        var start = ownerField.LastIndexOf('(');
+                        var end = ownerField.LastIndexOf(')');
+                        if (start >= 0 && end > start)
+                        {
+                            var email = ownerField.Substring(start + 1, end - start - 1).Trim();
+                            owner = context.Users.FirstOrDefault(u => u.Email == email);
+                        }
+                    }
+
+                    projToAdd.Add(new Project
+                    {
+                        Name = name,
+                        Description = reader.GetValue(2)?.ToString(),
+                        DepartmentId = dept?.DepartmentId ?? context.Departments.First().DepartmentId,
+                        OwnerId = owner?.Id ?? context.Users.First().Id,
+                        CreatedAt = DateTime.Now
+                    });
+                }
+                if (projToAdd.Any())
+                {
+                    context.Projects.AddRange(projToAdd);
+                    await context.SaveChangesAsync();
+                    projectsCount = projToAdd.Count;
+                }
+            }
+            // Лист "Задачи" игнорируем
+        } while (reader.NextResult());
+    }
+}

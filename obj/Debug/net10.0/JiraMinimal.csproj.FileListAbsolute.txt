@@ -9,6 +9,13 @@ C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\JiraMinimal.
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\JiraMinimal.dll
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\JiraMinimal.pdb
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\Castle.Core.dll
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\ClosedXML.dll
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\ClosedXML.Parser.dll
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\DocumentFormat.OpenXml.dll
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\DocumentFormat.OpenXml.Framework.dll
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\ExcelDataReader.dll
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\ExcelDataReader.DataSet.dll
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\ExcelNumberFormat.dll
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\Humanizer.dll
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\Microsoft.AspNetCore.Components.QuickGrid.dll
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter.dll
@@ -32,6 +39,8 @@ C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\Microsoft.Ex
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\Microsoft.VisualStudio.SolutionPersistence.dll
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\Mono.TextTemplating.dll
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\Newtonsoft.Json.dll
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\RBush.dll
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\SixLabors.Fonts.dll
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\SQLitePCLRaw.batteries_v2.dll
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\SQLitePCLRaw.core.dll
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\SQLitePCLRaw.provider.e_sqlite3.dll
@@ -41,6 +50,7 @@ C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\System.Compo
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\System.Composition.Hosting.dll
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\System.Composition.Runtime.dll
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\System.Composition.TypedParts.dll
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\System.IO.Packaging.dll
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\cs\Microsoft.CodeAnalysis.resources.dll
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\de\Microsoft.CodeAnalysis.resources.dll
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\es\Microsoft.CodeAnalysis.resources.dll
@@ -193,6 +203,7 @@ C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\compressed\j
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\compressed\5h0h4f4w5b-{0}-h1s4sie4z3-h1s4sie4z3.gz
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\compressed\8nctq88j6v-{0}-63fj8s7r0e-63fj8s7r0e.gz
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\compressed\7fgnh7bmby-{0}-0j3bgjxly4-0j3bgjxly4.gz
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\compressed\l8x0f2p1kj-{0}-sfts86nwjq-sfts86nwjq.gz
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\compressed\cun3knxttd-{0}-pr21mg9rrw-pr21mg9rrw.gz
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\compressed\qc68641kpe-{0}-abdmv1u4y3-abdmv1u4y3.gz
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\compressed\wghnxberba-{0}-hwaxidwiwj-hwaxidwiwj.gz

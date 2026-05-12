@@ -1,0 +1,105 @@
+@page "/exportexcel"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
+@using Microsoft.EntityFrameworkCore
+@using ClosedXML.Excel
+@using JiraMinimal.Data
+@rendermode InteractiveServer
+@inject IDbContextFactory<JiraContext> DbFactory
+@inject IJSRuntime JS
+
+<PageTitle>Экспорт данных</PageTitle>
+<h1>Экспорт всех таблиц в Excel</h1>
+
+<button class="btn btn-success" @onclick="ExportXLS">📥 Экспорт всех таблиц в Excel</button>
+
+@if (!string.IsNullOrEmpty(statusMessage))
+{
+    <div class="alert alert-info mt-2">@statusMessage</div>
+}
+
+@code {
+    private string? statusMessage;
+
+    private async Task ExportXLS()
+    {
+        statusMessage = "Формирование файла...";
+        var bytes = await GenerateExcelAsync();
+        await JS.InvokeVoidAsync("BlazorDownloadFile", "JiraMinimal_Export.xlsx", bytes);
+        statusMessage = "Экспорт выполнен.";
+    }
+
+    private async Task<byte[]> GenerateExcelAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+
+        var departments = await context.Departments.Include(d => d.Head).ToListAsync();
+        var projects = await context.Projects.Include(p => p.Department).Include(p => p.Owner).ToListAsync();
+        var issues = await context.Issues
+            .Include(i => i.Project)
+            .Include(i => i.IssueStatus)
+            .Include(i => i.IssuePriority)
+            .Include(i => i.Assignee)
+            .Include(i => i.Reporter)
+            .Include(i => i.CurrentDepartment)
+            .ToListAsync();
+
+        using var wb = new XLWorkbook();
+
+        // Лист "Отделы"
+        var wsDeps = wb.Worksheets.Add("Отделы");
+        wsDeps.Cell(1, 1).Value = "Id";
+        wsDeps.Cell(1, 2).Value = "Название";
+        wsDeps.Cell(1, 3).Value = "Описание";
+        wsDeps.Cell(1, 4).Value = "Руководитель";
+        for (int i = 0; i < departments.Count; i++)
+        {
+            wsDeps.Cell(i + 2, 1).Value = departments[i].DepartmentId;
+            wsDeps.Cell(i + 2, 2).Value = departments[i].Name;
+            wsDeps.Cell(i + 2, 3).Value = departments[i].Description;
+            wsDeps.Cell(i + 2, 4).Value = departments[i].Head?.FullName ?? "";
+        }
+
+        // Лист "Проекты"
+        var wsProj = wb.Worksheets.Add("Проекты");
+        wsProj.Cell(1, 1).Value = "Id";
+        wsProj.Cell(1, 2).Value = "Название";
+        wsProj.Cell(1, 3).Value = "Описание";
+        wsProj.Cell(1, 4).Value = "Отдел";
+        wsProj.Cell(1, 5).Value = "Владелец";
+        for (int i = 0; i < projects.Count; i++)
+        {
+            wsProj.Cell(i + 2, 1).Value = projects[i].ProjectId;
+            wsProj.Cell(i + 2, 2).Value = projects[i].Name;
+            wsProj.Cell(i + 2, 3).Value = projects[i].Description;
+            wsProj.Cell(i + 2, 4).Value = projects[i].Department?.Name ?? "";
+            wsProj.Cell(i + 2, 5).Value = projects[i].Owner?.FullName ?? "";
+        }
+
+        // Лист "Задачи"
+        var wsIssues = wb.Worksheets.Add("Задачи");
+        wsIssues.Cell(1, 1).Value = "Id";
+        wsIssues.Cell(1, 2).Value = "Название";
+        wsIssues.Cell(1, 3).Value = "Тип";
+        wsIssues.Cell(1, 4).Value = "Статус";
+        wsIssues.Cell(1, 5).Value = "Приоритет";
+        wsIssues.Cell(1, 6).Value = "Исполнитель";
+        wsIssues.Cell(1, 7).Value = "Автор";
+        wsIssues.Cell(1, 8).Value = "Отдел";
+        for (int i = 0; i < issues.Count; i++)
+        {
+            wsIssues.Cell(i + 2, 1).Value = issues[i].IssueId;
+            wsIssues.Cell(i + 2, 2).Value = issues[i].Title;
+            wsIssues.Cell(i + 2, 3).Value = issues[i].Type;
+            wsIssues.Cell(i + 2, 4).Value = issues[i].IssueStatus?.Name ?? "";
+            wsIssues.Cell(i + 2, 5).Value = issues[i].IssuePriority?.Name ?? "";
+            wsIssues.Cell(i + 2, 6).Value = issues[i].Assignee?.FullName ?? "";
+            wsIssues.Cell(i + 2, 7).Value = issues[i].Reporter?.FullName ?? "";
+            wsIssues.Cell(i + 2, 8).Value = issues[i].CurrentDepartment?.Name ?? "";
+        }
+
+        using var ms = new MemoryStream();
+        wb.SaveAs(ms);
+        return ms.ToArray();
+    }
+}
