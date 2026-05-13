@@ -72,8 +72,16 @@ else
     private async Task UpdateProject()
     {
         if (project is null) return;
+
         using var context = DbFactory.CreateDbContext();
-        context.Projects.Update(project);
+        var dbProject = await context.Projects.FindAsync(ProjectId);
+        if (dbProject is null) return;
+
+        dbProject.Name = project.Name;
+        dbProject.Description = project.Description;
+        dbProject.DepartmentId = project.DepartmentId;
+        dbProject.OwnerId = project.OwnerId;
+
         await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/projects");
     }

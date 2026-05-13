@@ -760,6 +760,25 @@
           }
         }
       },
+      "Plotly.Blazor/7.1.0": {
+        "type": "package",
+        "compile": {
+          "lib/net10.0/Plotly.Blazor.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net10.0/Plotly.Blazor.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/Plotly.Blazor.props": {}
+        },
+        "buildMultiTargeting": {
+          "buildMultiTargeting/Plotly.Blazor.props": {}
+        }
+      },
       "RBush/4.0.0": {
         "type": "package",
         "compile": {
@@ -2695,6 +2714,31 @@
         "packageIcon.png"
       ]
     },
+    "Plotly.Blazor/7.1.0": {
+      "sha512": "D2Wcnx+SpDQR8xhHlDT16q9lqvOzFPIXPIIXpNVT0yGxyteAy5gjyrtIPqg83HOTQylW6Rf6oX61WZ/lEW0acA==",
+      "type": "package",
+      "path": "plotly.blazor/7.1.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "build/Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+        "build/Microsoft.AspNetCore.StaticWebAssets.props",
+        "build/Plotly.Blazor.props",
+        "buildMultiTargeting/Plotly.Blazor.props",
+        "buildTransitive/Plotly.Blazor.props",
+        "lib/net10.0/Plotly.Blazor.dll",
+        "lib/net10.0/Plotly.Blazor.xml",
+        "lib/net8.0/Plotly.Blazor.dll",
+        "lib/net8.0/Plotly.Blazor.xml",
+        "lib/net9.0/Plotly.Blazor.dll",
+        "lib/net9.0/Plotly.Blazor.xml",
+        "plotly.blazor.7.1.0.nupkg.sha512",
+        "plotly.blazor.nuspec",
+        "staticwebassets/plotly-3.5.0.min.js",
+        "staticwebassets/plotly-basic-3.5.0.min.js",
+        "staticwebassets/plotly-interop-7.1.0.js"
+      ]
+    },
     "RBush/4.0.0": {
       "sha512": "j3GeRxxLUQdc+UrZnvythdQxi3bd8ayn87VDjfGXrvfodF550n9wR6SgQvpo+YiAv3GJezsu6lK0l47rRqnbdg==",
       "type": "package",
@@ -3053,7 +3097,8 @@
       "Microsoft.EntityFrameworkCore.Design >= 10.0.7",
       "Microsoft.EntityFrameworkCore.Proxies >= 10.0.7",
       "Microsoft.EntityFrameworkCore.Sqlite >= 10.0.7",
-      "Microsoft.EntityFrameworkCore.Tools >= 10.0.7"
+      "Microsoft.EntityFrameworkCore.Tools >= 10.0.7",
+      "Plotly.Blazor >= 7.1.0"
     ]
   },
   "packageFolders": {
@@ -3155,6 +3200,10 @@
             "suppressParent": "All",
             "target": "Package",
             "version": "[10.0.7, )"
+          },
+          "Plotly.Blazor": {
+            "target": "Package",
+            "version": "[7.1.0, )"
           }
         },
         "imports": [

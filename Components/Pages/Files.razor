@@ -1,0 +1,108 @@
+@page "/files"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@using Microsoft.EntityFrameworkCore
+@using JiraMinimal.Data
+@inject IDbContextFactory<JiraContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Файлы</PageTitle>
+<h1>Загрузка файлов к задачам</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <h3>Выберите задачу</h3>
+        <InputSelect @bind-Value="selectedIssueId" class="form-control mb-3">
+            <option value="">-- Выберите задачу --</option>
+            @foreach (var issue in issues)
+            {
+                <option value="@issue.IssueId">@issue.Title</option>
+            }
+        </InputSelect>
+
+        @if (selectedIssueId.HasValue)
+        {
+            <h4>Загрузить файл для задачи</h4>
+            <InputFile OnChange="UploadFile" class="form-control mb-3" />
+
+            <h4>Прикреплённые файлы</h4>
+            @if (attachments.Any())
+            {
+                <ul>
+                    @foreach (var att in attachments)
+                    {
+                        <li>
+                            <a href="@att.FilePath" target="_blank">@att.FileName</a>
+                            (@att.UploadedAt.ToShortDateString())
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p>Нет прикреплённых файлов.</p>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private List<Issue> issues = new();
+    private int? selectedIssueId;
+    private List<Attachment> attachments = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        issues = await context.Issues.ToListAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (selectedIssueId.HasValue)
+        {
+            using var context = DbFactory.CreateDbContext();
+            attachments = await context.Attachments
+                .Where(a => a.IssueId == selectedIssueId.Value)
+                .ToListAsync();
+        }
+        else
+        {
+            attachments.Clear();
+        }
+    }
+
+    private async Task UploadFile(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null || !selectedIssueId.HasValue) return;
+
+        // Сохраняем файл в wwwroot/uploads
+        var fileName = Path.GetFileName(file.Name);
+        var filePath = Path.Combine("uploads", fileName);
+
+        var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", filePath);
+        Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+
+        await using var stream = new FileStream(fullPath, FileMode.Create);
+        await file.OpenReadStream(5 * 1024 * 1024).CopyToAsync(stream);
+
+        // Записываем в БД
+        using var context = DbFactory.CreateDbContext();
+        context.Attachments.Add(new Attachment
+        {
+            IssueId = selectedIssueId.Value,
+            FileName = fileName,
+            FilePath = "/" + filePath.Replace("\\", "/")
+        });
+        await context.SaveChangesAsync();
+
+        // Обновляем список
+        attachments = await context.Attachments
+            .Where(a => a.IssueId == selectedIssueId.Value)
+            .ToListAsync();
+
+        StateHasChanged();
+    }
+}

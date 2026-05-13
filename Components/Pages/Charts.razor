@@ -1,0 +1,55 @@
+@page "/charts"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Plotly.Blazor
+@using Plotly.Blazor.Traces
+@using Plotly.Blazor.LayoutLib
+@using JiraMinimal.Data
+@inject IDbContextFactory<JiraContext> DbFactory
+
+<PageTitle>Графики</PageTitle>
+<h1>Распределение задач по статусам</h1>
+
+@if (data.Any())
+{
+    <PlotlyChart Config="config" Layout="layout" Data="data" />
+}
+else
+{
+    <p>Нет данных для отображения графика. Создайте задачи в разделе «Задачи».</p>
+}
+
+@code {
+    private Config config = new() { Responsive = true };
+    private Layout layout = new();
+    private IList<ITrace> data = new List<ITrace>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        var statusCounts = await context.Issues
+            .Include(i => i.IssueStatus)
+            .GroupBy(i => i.IssueStatus.Name)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        if (statusCounts.Any())
+        {
+            var labels = statusCounts.Select(s => (object)s.Status).ToList();
+            var values = statusCounts.Select(s => (object)(decimal)s.Count).ToList();
+
+            var pie = new Pie
+            {
+                Labels = labels,
+                Values = values
+            };
+
+            data = new List<ITrace> { pie };
+
+            layout = new Layout
+            {
+                Title = new Plotly.Blazor.LayoutLib.Title { Text = "Задачи по статусам" }
+            };
+        }
+    }
+}

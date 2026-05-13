@@ -214,6 +214,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxVc2Vyc1xJbmRleC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/89063/source/repos/Kursovaya/JiraMinimal/Components/Pages/Charts.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDaGFydHMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/89063/source/repos/Kursovaya/JiraMinimal/Components/Pages/Departments/Create.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEZXBhcnRtZW50c1xDcmVhdGUucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
@@ -240,6 +244,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/89063/source/repos/Kursovaya/JiraMinimal/Components/Pages/ExportExcel.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xFeHBvcnRFeGNlbC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/89063/source/repos/Kursovaya/JiraMinimal/Components/Pages/Files.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xGaWxlcy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/89063/source/repos/Kursovaya/JiraMinimal/Components/Pages/Home.razor]

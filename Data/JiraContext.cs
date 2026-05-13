@@ -22,6 +22,8 @@ public class JiraContext : IdentityDbContext<ApplicationUser>
     public DbSet<IssueDepartmentTransfer> IssueDepartmentTransfers { get; set; } = null!;
     public DbSet<IssueHistory> IssueHistories { get; set; } = null!;
 
+    public DbSet<Attachment> Attachments { get; set; } = null!;
+
    protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
     base.OnModelCreating(modelBuilder);

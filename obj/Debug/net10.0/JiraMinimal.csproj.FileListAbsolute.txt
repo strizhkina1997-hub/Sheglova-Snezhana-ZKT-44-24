@@ -222,3 +222,7 @@ C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\refint\JiraM
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\JiraMinimal.pdb
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\JiraMinimal.genruntimeconfig.cache
 C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\ref\JiraMinimal.dll
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\bin\Debug\net10.0\Plotly.Blazor.dll
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\compressed\ofy8zoezeo-{0}-0dr8hr9b97-0dr8hr9b97.gz
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\compressed\vq8ub8pa5r-{0}-vzpjivaw8p-vzpjivaw8p.gz
+C:\Users\89063\source\repos\Kursovaya\JiraMinimal\obj\Debug\net10.0\compressed\rxt19p0ozg-{0}-vkxxvg2117-vkxxvg2117.gz

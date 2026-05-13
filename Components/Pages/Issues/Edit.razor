@@ -127,8 +127,23 @@ else
     private async Task UpdateIssue()
     {
         if (issue is null) return;
+
         using var context = DbFactory.CreateDbContext();
-        context.Issues.Update(issue);
+        var dbIssue = await context.Issues.FindAsync(IssueId);
+        if (dbIssue is null) return;
+
+        // Переносим все изменяемые поля
+        dbIssue.Title = issue.Title;
+        dbIssue.Description = issue.Description;
+        dbIssue.ProjectId = issue.ProjectId;
+        dbIssue.IssueStatusId = issue.IssueStatusId;
+        dbIssue.Type = issue.Type;
+        dbIssue.IssuePriorityId = issue.IssuePriorityId;
+        dbIssue.AssigneeId = issue.AssigneeId;
+        dbIssue.ReporterId = issue.ReporterId;
+        dbIssue.CurrentDepartmentId = issue.CurrentDepartmentId;
+        dbIssue.DueDate = issue.DueDate;
+
         await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/issues");
     }
